@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "target": "ES6",
+        "experimentalDecorators": true,
+        "module": "commonjs"
+    },
+    "files": [
+        "index.ts"
+    ],
+    "include": [
+        "@types/ethereumjs-util.d.ts",
+        "@types/ethereumjs-tx.d.ts",
+    ]
+}
