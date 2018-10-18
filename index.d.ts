@@ -39,5 +39,5 @@ export declare function decodeFunctionCall(web3: Web3, data: string, abis: ABIDe
  * @param abis: 所有已知的 abi，會試著自動配對
  * @returns 可能回傳 null (當沒有找到適合的 abi 時)
  */
-export declare function decodeLog(web3: Web3, log: Log, abis: ABIDefinition[]): object;
+export declare function decodeLog(web3: Web3, log: Log, abis: ABIDefinition[]): DecodeFunctionCallResult;
 export {};

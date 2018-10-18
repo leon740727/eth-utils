@@ -146,7 +146,7 @@ export function decodeFunctionCall (web3: Web3, data: string, abis: ABIDefinitio
  * @param abis: 所有已知的 abi，會試著自動配對
  * @returns 可能回傳 null (當沒有找到適合的 abi 時)
  */
-export function decodeLog (web3: Web3, log: Log, abis: ABIDefinition[]): object {
+export function decodeLog (web3: Web3, log: Log, abis: ABIDefinition[]): DecodeFunctionCallResult {
     function eventSig1 (log: Log) {
         return log.topics ? log.topics[0] : null;
     }
@@ -157,7 +157,10 @@ export function decodeLog (web3: Web3, log: Log, abis: ABIDefinition[]): object 
     const abi = abis.filter(abi => eventSig2(abi) === eventSig1(log))[0];
     if (abi) {
         const result = web3.eth.abi.decodeLog(abi.inputs, log.data, log.topics);
-        return r.pick(abi.inputs.map(i => i.name), result);
+        return {
+            abi: abi,
+            parameters: r.pick(abi.inputs.map(i => i.name), result),
+        };
     } else {
         return null;
     }

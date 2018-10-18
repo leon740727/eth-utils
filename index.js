@@ -136,7 +136,10 @@ function decodeLog(web3, log, abis) {
     const abi = abis.filter(abi => eventSig2(abi) === eventSig1(log))[0];
     if (abi) {
         const result = web3.eth.abi.decodeLog(abi.inputs, log.data, log.topics);
-        return r.pick(abi.inputs.map(i => i.name), result);
+        return {
+            abi: abi,
+            parameters: r.pick(abi.inputs.map(i => i.name), result),
+        };
     }
     else {
         return null;
