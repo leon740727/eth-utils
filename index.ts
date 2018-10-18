@@ -1,11 +1,14 @@
+import * as r from 'ramda';
 import { BigNumber } from 'bignumber.js';
 import * as crypto from 'crypto';
 import * as secp256k1 from 'secp256k1/elliptic';
 import Web3 = require('web3');
 import Contract from 'web3/eth/contract';
-import { TransactionReceipt } from 'web3/types';
+import { Log, TransactionReceipt } from 'web3/types';
+import { ABIDefinition  } from 'web3/eth/abi';
 import * as ethUtils from 'ethereumjs-util';
 import EthTx = require("ethereumjs-tx");
+import rlp = require('rlp');
 
 const settings = {
     gasPrice: '100000000000',
@@ -72,5 +75,90 @@ export function generatePrivateKey (): Buffer {
         return generatePrivateKey();
     } else {
         return key;
+    }
+}
+
+type Tx = {
+    nonce: string,
+    gasPrice: string,
+    gasLimit: string,
+    to: string,
+    value: string,
+    data: string,
+    v: string,
+    r: string,
+    s: string,
+}
+export function decodeSignedTx (signTx: string): Tx {
+    function buf2num (buf: Buffer): string {
+        if (buf.toString('hex') === '') {
+            return '0';
+        } else {
+            return new BigNumber(`0x${buf.toString('hex')}`).toString();
+        }
+    }
+    function buf2str (buf: Buffer): string {
+        return '0x' + buf.toString('hex');
+    }
+    type Field = {
+        name: string,
+        data: (hex: Buffer) => string,
+    }
+    /** come from ethereumjs-tx */
+    const fields: Field[] = [
+        {name: 'nonce', data: buf2num},
+        {name: 'gasPrice', data: buf2num},
+        {name: 'gasLimit', data: buf2num},
+        {name: 'to', data: buf2str},
+        {name: 'value', data: buf2num},
+        {name: 'data', data: buf2str},
+        {name: 'v', data: buf2str},
+        {name: 'r', data: buf2str},
+        {name: 's', data: buf2str},
+    ];
+    const bufs = rlp.decode(signTx.match(/^0x/) ? signTx : '0x' + signTx) as any as Buffer[];
+    const results = r.zip(fields, bufs)
+    .map(([field, data]) => r.objOf(field.name, field.data(data)));
+    return r.mergeAll(results);
+}
+
+type DecodeFunctionCallResult = {
+    abi: ABIDefinition,
+    parameters: object,
+}
+export function decodeFunctionCall (web3: Web3, data: string, abis: ABIDefinition[]): DecodeFunctionCallResult {
+    const func = abis
+    .filter(abi => abi.type === 'function')
+    .filter(func => data.startsWith(web3.eth.abi.encodeFunctionSignature(func)))[0];
+    if (func) {
+        const sig = web3.eth.abi.encodeFunctionSignature(func);
+        const params = web3.eth.abi.decodeParameters(func.inputs, data.slice(sig.length));
+        return {
+            abi: func,
+            parameters: r.pick(func.inputs.map(i => i.name), params),
+        };
+    } else {
+        return null;
+    }
+}
+
+/**
+ * @param abis: 所有已知的 abi，會試著自動配對
+ * @returns 可能回傳 null (當沒有找到適合的 abi 時)
+ */
+export function decodeLog (web3: Web3, log: Log, abis: ABIDefinition[]): object {
+    function eventSig1 (log: Log) {
+        return log.topics ? log.topics[0] : null;
+    }
+    const eventSig2 = (abi: ABIDefinition) => {
+        return web3.eth.abi.encodeEventSignature(r.pick(['name','type','inputs'], abi));
+    }
+
+    const abi = abis.filter(abi => eventSig2(abi) === eventSig1(log))[0];
+    if (abi) {
+        const result = web3.eth.abi.decodeLog(abi.inputs, log.data, log.topics);
+        return r.pick(abi.inputs.map(i => i.name), result);
+    } else {
+        return null;
     }
 }
