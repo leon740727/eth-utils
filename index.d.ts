@@ -24,7 +24,7 @@ export declare const fmt: {
 };
 export declare function sign(key: Buffer, tx: Tx): Tx;
 export declare function serialize(tx: Tx): string;
-export declare function deploy(web3: Web3, key: Buffer, abi: ABIDefinition[], bytecode: string, args: any[], gasPrice: Num, gasLimit: Num): Promise<Contract>;
+export declare function deploy(web3: Web3, key: Buffer, abi: ABIDefinition[], bytecode: string, args: any[], nonce: Num, gasPrice: Num, gasLimit: Num): Promise<Contract>;
 export declare function generatePrivateKey(): Buffer;
 export declare function decodeSignedTx(signTx: string): Tx;
 declare type DecodeFunctionCallResult = {
