@@ -17,6 +17,9 @@ interface TxData extends RawTxData {
 declare class EthTx {
     constructor (rawTx: RawTxData)
 
+    raw: Buffer[]
+    _fields: string[]
+
     sign (key: Buffer): void
     hash (includeSignature?: boolean): Buffer
     serialize (): Buffer

@@ -1,69 +1,61 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+const assert = require("assert");
 const r = require("ramda");
 const bignumber_js_1 = require("bignumber.js");
 const crypto = require("crypto");
 const secp256k1 = require("secp256k1/elliptic");
-const ethUtils = require("ethereumjs-util");
 const EthTx = require("ethereumjs-tx");
 const rlp = require("rlp");
-const settings = {
-    gasPrice: '100000000000',
-    gasLimit: '6000000',
+const txNumFields = ['nonce', 'gasPrice', 'gasLimit', 'value'];
+exports.fmt = {
+    num: (value) => {
+        assert.ok(!new bignumber_js_1.BigNumber(value).isNaN(), `'${value}' not a number`);
+        return '0x' + new bignumber_js_1.BigNumber(value).toString(16);
+    },
+    hex: (value) => {
+        return '0x' + value.replace(/^0x/, '').toLowerCase();
+    },
+    tx: (tx) => {
+        const values = tx.raw.map(v => '0x' + v.toString('hex'));
+        return r.fromPairs(r.zip(tx._fields, values).filter(([f, v]) => v !== '0x'));
+    },
 };
-function isEq(addr1, addr2) {
-    // address 如果不算前面的 '0x'，共有 40 個字元。不管前面有沒有 '0x' 都沒關係
-    return addr1.slice(-40).toLowerCase() === addr2.slice(-40).toLowerCase();
+function _ethTx(tx) {
+    // 傳給 EthTx 的所有欄位都必須是 0x 開頭 (包括 to, data 等字串欄位)
+    const numFields = r.intersection(r.keys(tx), txNumFields);
+    const strFields = r.difference(r.keys(tx), txNumFields);
+    const numValues = numFields.map(f => exports.fmt.num(tx[f]));
+    const strValues = strFields.map(f => exports.fmt.hex(tx[f]));
+    return new EthTx(r.fromPairs(r.zip(numFields, numValues).concat(r.zip(strFields, strValues))));
 }
-exports.isEq = isEq;
-function defaultGasLimit() {
-    return '0x' + new bignumber_js_1.BigNumber(settings.gasLimit).toString(16);
+function sign(key, tx) {
+    const t = _ethTx(tx);
+    t.sign(key);
+    return exports.fmt.tx(t);
 }
-exports.defaultGasLimit = defaultGasLimit;
-/**
- * @param web3
- * @param senderKey
- * @param to 可能是 null。如果要 deploy contract 就把 to 設為 null
- * @param value
- * @param data
- */
-function makeTx(web3, senderKey, to, value, data) {
-    return web3.eth.getTransactionCount('0x' + ethUtils.privateToAddress(senderKey).toString('hex'))
-        .then(nonce => {
-        let tx = new EthTx({
-            to: to === null ? undefined : to,
-            data: data,
-            nonce: nonce,
-            value: '0x' + new bignumber_js_1.BigNumber(value).toString(16),
-            gasPrice: '0x' + new bignumber_js_1.BigNumber(settings.gasPrice).toString(16),
-            gasLimit: '0x' + new bignumber_js_1.BigNumber(settings.gasLimit).toString(16),
-        });
-        tx.sign(senderKey);
-        return tx;
+exports.sign = sign;
+function serialize(tx) {
+    return `0x${_ethTx(tx).serialize().toString('hex')}`;
+}
+exports.serialize = serialize;
+function deploy(web3, key, abi, bytecode, args) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const data = new web3.eth.Contract(abi).deploy({ data: bytecode, arguments: args }).encodeABI();
+        const tx = sign(key, { data });
+        const receipt = yield web3.eth.sendSignedTransaction(serialize(tx));
+        return new web3.eth.Contract(abi, receipt.contractAddress);
     });
 }
-exports.makeTx = makeTx;
-function sendTx(web3, senderKey, to, value, data) {
-    return makeTx(web3, senderKey, to, value, data)
-        .then(tx => web3.eth.sendSignedTransaction(`0x${tx.serialize().toString('hex')}`));
-}
-exports.sendTx = sendTx;
-function deploy(web3, deployer, abi, bytecode, args) {
-    return new web3.eth.Contract(abi).deploy({ data: bytecode, arguments: args })
-        .send({
-        from: deployer,
-        gas: 2000000,
-    })
-        .then(res => res);
-}
 exports.deploy = deploy;
-function deployByKey(web3, deployKey, abi, bytecode, args) {
-    const data = new web3.eth.Contract(abi).deploy({ data: bytecode, arguments: args }).encodeABI();
-    return makeTx(web3, deployKey, null, 0, data)
-        .then(tx => web3.eth.sendSignedTransaction(`0x${tx.serialize().toString('hex')}`))
-        .then(r => new web3.eth.Contract(abi, r.contractAddress));
-}
-exports.deployByKey = deployByKey;
 function generatePrivateKey() {
     const keySize = 32;
     const key = crypto.randomBytes(keySize);
