@@ -62,9 +62,9 @@ export function serialize (tx: Tx): string {
     return `0x${_ethTx(tx).serialize().toString('hex')}`;
 }
 
-export async function deploy (web3: Web3, key: Buffer, abi: ABIDefinition[], bytecode: string, args: any[]): Promise<Contract> {
+export async function deploy (web3: Web3, key: Buffer, abi: ABIDefinition[], bytecode: string, args: any[], gasPrice: Num, gasLimit: Num): Promise<Contract> {
     const data = new web3.eth.Contract(abi).deploy({data: bytecode, arguments: args}).encodeABI();
-    const tx = sign(key, { data });
+    const tx = sign(key, { data, gasPrice, gasLimit });
     const receipt = await web3.eth.sendSignedTransaction(serialize(tx));
     return new web3.eth.Contract(abi, receipt.contractAddress);
 }

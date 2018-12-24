@@ -47,10 +47,10 @@ function serialize(tx) {
     return `0x${_ethTx(tx).serialize().toString('hex')}`;
 }
 exports.serialize = serialize;
-function deploy(web3, key, abi, bytecode, args) {
+function deploy(web3, key, abi, bytecode, args, gasPrice, gasLimit) {
     return __awaiter(this, void 0, void 0, function* () {
         const data = new web3.eth.Contract(abi).deploy({ data: bytecode, arguments: args }).encodeABI();
-        const tx = sign(key, { data });
+        const tx = sign(key, { data, gasPrice, gasLimit });
         const receipt = yield web3.eth.sendSignedTransaction(serialize(tx));
         return new web3.eth.Contract(abi, receipt.contractAddress);
     });
