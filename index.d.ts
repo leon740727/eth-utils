@@ -7,9 +7,9 @@ import EthTx = require("ethereumjs-tx");
 /** Num could be (15 or '15' or '0xf') */
 declare type Num = number | string;
 export declare type Tx = {
-    nonce?: Num;
-    gasPrice?: Num;
-    gasLimit?: Num;
+    nonce: Num;
+    gasPrice: Num;
+    gasLimit: Num;
     to?: string;
     value?: Num;
     data?: string;

@@ -53,7 +53,7 @@ describe('交易', () => {
     it('空交易', done => {
         const tx1 = makeTx(0, null, 0, '', 0, 0);
         tx1.sign(key);
-        const tx2 = sign(key, {});
+        const tx2 = sign(key, {nonce: 0, gasPrice:0, gasLimit: 0});
         expect('0x' + tx1.serialize().toString('hex')).eql(serialize(tx2));
         done();
     });

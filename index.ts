@@ -14,9 +14,9 @@ import rlp = require('rlp');
 type Num = number | string;
 
 export type Tx = {
-    nonce?: Num,
-    gasPrice?: Num,
-    gasLimit?: Num,
+    nonce: Num,
+    gasPrice: Num,
+    gasLimit: Num,
     to?: string,
     value?: Num,
     data?: string,
@@ -39,7 +39,7 @@ export const fmt = {
 
     tx: (tx: EthTx): Tx => {
         const values = tx.raw.map(v => '0x' + v.toString('hex'))
-        return r.fromPairs(r.zip(tx._fields, values).filter(([f, v]) => v !== '0x'));
+        return r.fromPairs(r.zip(tx._fields, values).filter(([f, v]) => v !== '0x')) as any;
     },
 }
 
