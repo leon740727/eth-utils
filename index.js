@@ -29,7 +29,7 @@ exports.fmt = {
         return r.fromPairs(r.zip(tx._fields, values).filter(([f, v]) => v !== '0x'));
     },
 };
-function _ethTx(tx) {
+function ethTx(tx) {
     // 傳給 EthTx 的所有欄位都必須是 0x 開頭 (包括 to, data 等字串欄位)
     const numFields = r.intersection(r.keys(tx), txNumFields);
     const strFields = r.difference(r.keys(tx), txNumFields);
@@ -37,14 +37,15 @@ function _ethTx(tx) {
     const strValues = strFields.map(f => exports.fmt.hex(tx[f]));
     return new EthTx(r.fromPairs(r.zip(numFields, numValues).concat(r.zip(strFields, strValues))));
 }
+exports.ethTx = ethTx;
 function sign(key, tx) {
-    const t = _ethTx(tx);
+    const t = ethTx(tx);
     t.sign(key);
     return exports.fmt.tx(t);
 }
 exports.sign = sign;
 function serialize(tx) {
-    return `0x${_ethTx(tx).serialize().toString('hex')}`;
+    return `0x${ethTx(tx).serialize().toString('hex')}`;
 }
 exports.serialize = serialize;
 function deploy(web3, key, abi, bytecode, args, nonce, gasPrice, gasLimit) {

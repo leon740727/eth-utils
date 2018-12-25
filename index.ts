@@ -43,7 +43,7 @@ export const fmt = {
     },
 }
 
-function _ethTx (tx: Tx): EthTx {
+export function ethTx (tx: Tx): EthTx {
     // 傳給 EthTx 的所有欄位都必須是 0x 開頭 (包括 to, data 等字串欄位)
     const numFields = r.intersection(r.keys(tx), txNumFields);
     const strFields = r.difference(r.keys(tx), txNumFields);
@@ -53,13 +53,13 @@ function _ethTx (tx: Tx): EthTx {
 }
 
 export function sign (key: Buffer, tx: Tx): Tx {
-    const t = _ethTx(tx);
+    const t = ethTx(tx);
     t.sign(key);
     return fmt.tx(t);
 }
 
 export function serialize (tx: Tx): string {
-    return `0x${_ethTx(tx).serialize().toString('hex')}`;
+    return `0x${ethTx(tx).serialize().toString('hex')}`;
 }
 
 export async function deploy (web3: Web3, key: Buffer, abi: ABIDefinition[], bytecode: string, args: any[], nonce: Num, gasPrice: Num, gasLimit: Num): Promise<Contract> {

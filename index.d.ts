@@ -22,6 +22,7 @@ export declare const fmt: {
     hex: (value: string) => string;
     tx: (tx: EthTx) => Tx;
 };
+export declare function ethTx(tx: Tx): EthTx;
 export declare function sign(key: Buffer, tx: Tx): Tx;
 export declare function serialize(tx: Tx): string;
 export declare function deploy(web3: Web3, key: Buffer, abi: ABIDefinition[], bytecode: string, args: any[], nonce: Num, gasPrice: Num, gasLimit: Num): Promise<Contract>;
