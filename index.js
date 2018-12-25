@@ -25,8 +25,12 @@ exports.fmt = {
         return '0x' + value.replace(/^0x/, '').toLowerCase();
     },
     tx: (tx) => {
-        const values = tx.raw.map(v => '0x' + v.toString('hex'));
-        return r.fromPairs(r.zip(tx._fields, values).filter(([f, v]) => v !== '0x'));
+        const musts = ['nonce', 'gasPrice', 'gasLimit']; // 必填欄位
+        const has = (list, item) => list.indexOf(item) !== -1;
+        const values = tx.raw.map(v => '0x' + (v.length === 0 ? '0' : v.toString('hex')));
+        const pairs = r.zip(tx._fields, values)
+            .filter(([f, v]) => has(musts, f) || v !== '0x0');
+        return r.fromPairs(pairs);
     },
 };
 function ethTx(tx) {

@@ -38,8 +38,12 @@ export const fmt = {
     },
 
     tx: (tx: EthTx): Tx => {
-        const values = tx.raw.map(v => '0x' + v.toString('hex'))
-        return r.fromPairs(r.zip(tx._fields, values).filter(([f, v]) => v !== '0x')) as any;
+        const musts = ['nonce', 'gasPrice', 'gasLimit'];        // 必填欄位
+        const has = <T> (list: T[], item: T) => list.indexOf(item) !== -1;
+        const values = tx.raw.map(v => '0x' + (v.length === 0 ? '0' : v.toString('hex')));
+        const pairs = r.zip(tx._fields, values)
+        .filter(([f, v]) => has(musts, f) || v !== '0x0');
+        return r.fromPairs(pairs) as any;
     },
 }
 
