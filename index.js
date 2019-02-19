@@ -132,7 +132,10 @@ function decodeLog(web3, log, abis) {
     };
     const abi = abis.filter(abi => eventSig2(abi) === eventSig1(log))[0];
     if (abi) {
-        const result = web3.eth.abi.decodeLog(abi.inputs, log.data, log.topics);
+        // without the topic[0] if its a non-anonymous event, otherwise with topic[0]
+        // [https://web3js.readthedocs.io/en/1.0/web3-eth-abi.html#decodelog]
+        const topics = abi.anonymous ? log.topics : log.topics.slice(1);
+        const result = web3.eth.abi.decodeLog(abi.inputs, log.data, topics);
         return {
             abi: abi,
             parameters: r.pick(abi.inputs.map(i => i.name), result),
