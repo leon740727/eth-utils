@@ -16,11 +16,11 @@
     "ethereumjs-util": "^6.0.0",
     "ramda": "^0.25.0",
     "secp256k1": "^3.5.2",
-    "web3": "^1.0.0-beta.36"
+    "web3": "1.0.0-beta.36"
   },
   "devDependencies": {
     "@types/ramda": "^0.25.42",
-    "@types/web3": "^1.0.10",
+    "@types/web3": "1.0.10",
     "chai": "^4.2.0",
     "mocha": "^5.2.0",
     "typescript": "^3.2.2"
